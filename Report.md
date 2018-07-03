@@ -1,4 +1,4 @@
-### 实验报告
+# 实验报告
 
 ## 程序原理
 
@@ -12,14 +12,16 @@ meltdown 攻击原理：
 
 ## 攻击步骤
 
-概念：
+**概念代码**（引用自论文）：
+
+
 ```
 raise_exception();
 access(probe_data[data*4096]);
 ```
-**（引用自论文）**
 
-准备工作：
+
+**准备工作**：
 
 1. 构建一个数组probe_data 作为检查时延的工具 并使该数组初始时在内存中而不在cache中
 
@@ -35,8 +37,8 @@ access(probe_data[data*4096]);
 3. 将线程绑定到某个cpu核 使得attacker能够通过寄存器接触被泄露的信息
 4. 提前测好访问物理内存和访问cache的时间，作为判断的标准
 
-执行过程：
-
+**执行过程**：
+（汇编代码引用自论文）
 ```
 1 ; rcx = kernel address 
 2 ; rbx = probe array 
@@ -57,7 +59,7 @@ access(probe_data[data*4096]);
 9. 重复上述过程，理论上可以访问任何被禁区域
 
 
-代码分析：
+**代码分析**：
 （代码引用自github: pabodin/meltdown-exploit)
 
 1. 准备工作
