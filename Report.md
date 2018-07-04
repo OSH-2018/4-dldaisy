@@ -81,7 +81,8 @@ void clflush_target(void)
 
 ```
 
-上述代码构建了数组probe_data,并通过mm_clflush将其清出cache
+上述代码构建了数组probe_data,并通过mm_clflush将其清出cache。
+此时，完成了Flush一步,probe_data数组在内存中，等待Reload。
 
 ```
 tatic void pin_cpu0()
@@ -105,6 +106,8 @@ tatic void pin_cpu0()
 ```
 
 上述代码将线程和CPU绑定，从而保证rax的数据可以被获取
+若不再同一个cpu核，由于进程调度中的上下文切换，会导致rax没有继续存在，从而无法传递窃取信息
+
 
  ```
   
@@ -131,7 +134,9 @@ tatic void pin_cpu0()
 }
 
 ```
+
 上述代码注册了处理SIGSEGV信号的程序，使得段错误出现后转到stospeculate处（在asm代码的末尾）继续执行
+因此，rax被保留在进程中，成为漏洞泄露的地方
 
 ```
 set_cache_hit_threshold(void)
@@ -237,6 +242,7 @@ asm volatile (
   ```
   
   上述代码对应论文的汇编部分。通过预测执行的漏洞，将victim data泄露给rax
+  上述代码的核心在于Reload。目标数据作为访问的地址，访问probe_data数组，将其唯一的一块调入缓存。
   
 
 
@@ -285,7 +291,10 @@ int readbyte(int fd, unsigned long addr)
 	}
 
 ```
-上述代码即为核心代码的封装。将窃取victim data的过程整合在一起。speculate（）即asm部分；check（）就是遍历数组探测时间部分，在此处省略
+上述代码即为核心代码的封装。将窃取victim data的过程整合在一起。speculate（）即asm部分；
+check()就是遍历数组探测时间部分，在此处省略
+check()函数的功能在于检查访问时间，也就是常说的Probe阶段，访问rax地址指向的数据块是最快的，通过记录时间，即可得到rax。通过这种旁路攻击，
+完成了保密数据的获取。
 main函数无更多重要内容，此处省略。
 
 
@@ -295,8 +304,18 @@ main函数无更多重要内容，此处省略。
 ![](dump_memory.png)
 
 上图为dump memory的部分截图
+此处引用论文作者（IAIK)的代码中的若干部分。包括获取物理内存地址，dump memory。
 
 2. pabodin/meltdown-exploit
 
 ![](banner.png)
+
 上图为meltdown-exploit代码的测试结果。可以看到，每一行尾部输出一个字符，从而读出了禁区的内容
+此处引用[paboldin](https://github.com/paboldin/meltdown-exploit)的攻击代码
+
+## 参考资料
+
+1. S Mangard. Meltdown. https://meltdownattack.com/meltdown.pdf
+2. Paboldin. Meltdown-exploit. https://github.com/paboldin/meltdown-exploit
+3. IAIK. meltdown. https://github.com/IAIK/meltdown
+4. Wikipedia. Meltdown. https://en.wikipedia.org/wiki/Meltdown_(security_vulnerability)
