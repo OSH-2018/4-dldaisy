@@ -289,5 +289,12 @@ int readbyte(int fd, unsigned long addr)
 main函数无更多重要内容，此处省略。
 
 
+## 代码调试
+
+1. IAIK/meltdown 代码调试
+![](dump_memory.png)
+
+上图为dump memory的部分截图
+
 
 
