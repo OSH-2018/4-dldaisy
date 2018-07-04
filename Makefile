@@ -1,20 +1,14 @@
-override CFLAGS += -O3 -pthread -Wno-attributes -m64
-CC=gcc
 
-#BINARIES=test kaslr physical_reader
+CFLAGS += -O2 -msse2
 
-SOURCES := $(wildcard *.c)
-BINARIES := $(SOURCES:%.c=%)
+all: meltdown
 
-all: $(BINARIES)
+meltdown.o: rdtscp.h
 
-libkdump/libkdump.a:  libkdump/libkdump.c
-	make -C libkdump
+meltdown: meltdown.o
 
-%: %.c libkdump/libkdump.a
-	$(CC) $< -o $@ -m64 -Llibkdump -Ilibkdump -lkdump -static $(CFLAGS)
-	
-	
+rdtscp.h: detect_rdtscp.sh
+	./detect_rdtscp.sh >$@
+
 clean:
-	rm -f *.o $(BINARIES)
-	make clean -C libkdump
+	rm -f meltdown.o meltdown rdtscp.h
